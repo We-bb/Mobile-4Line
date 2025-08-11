@@ -1,20 +1,37 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { Link } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
+import { getSavedName, saveName } from "../lib/nameStore";
 
 export default function HomeScreen() {
+  const [name, setName] = useState("");
+
+  useEffect(() => {
+    (async () => setName(await getSavedName()))();
+  }, []);
+  const handlePlayPress = async () => {
+    const n = name.trim();
+    if (!n) return Alert.alert("Enter a name first");
+    await saveName(n);
+    // Link below will navigate; saving here ensures it's persisted
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>4Line Mobile</Text>
 
       <TextInput
+        value={name}
+        onChangeText={setName}
         placeholder="Enter your name..."
         placeholderTextColor="#aaa"
         style={styles.input}
+        maxLength={20}
       />
 
       {/* 👇 UPDATED LINK to go to mode select screen */}
       <Link href="/mode" asChild>
-        <TouchableOpacity style={styles.playButton}>
+        <TouchableOpacity style={styles.playButton} onPress={handlePlayPress}>
           <Text style={styles.playText}>▶ Play</Text>
         </TouchableOpacity>
       </Link>

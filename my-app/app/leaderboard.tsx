@@ -1,38 +1,33 @@
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
+// app/leaderboard.tsx
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
+import { watchTopScores } from "../lib/leaderboard";
 
-const dummyPlayers = Array.from({ length: 25 }, (_, i) => ({
-  name: `Player${i + 1}`,
-  wins: Math.floor(Math.random() * 100),
-  losses: Math.floor(Math.random() * 100),
-}));
+type Row = { id: string; name: string; score: number; createdAt: any };
 
 export default function LeaderboardScreen() {
   const router = useRouter();
+  const [rows, setRows] = useState<Row[]>([]);
+
+  useEffect(() => {
+    const stop = watchTopScores(setRows, 50);
+    return stop;
+  }, []);
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        onPress={() => router.push("/")}
-        style={styles.backButton}
-      >
+      <TouchableOpacity onPress={() => router.push("/")} style={styles.backButton}>
         <Text style={styles.backButtonText}>←</Text>
       </TouchableOpacity>
 
       <Text style={styles.title}>Leaderboard</Text>
 
       <ScrollView style={styles.scroll}>
-        {dummyPlayers.map((player, index) => (
-          <View key={index} style={styles.playerRow}>
+        {rows.map((r, i) => (
+          <View key={r.id} style={styles.playerRow}>
             <Text style={styles.playerText}>
-              {index + 1}. {player.name} — Wins: {player.wins}, Losses:{" "}
-              {player.losses}
+              {i + 1}. {r.name} — Score: {r.score}
             </Text>
           </View>
         ))}

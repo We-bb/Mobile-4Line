@@ -4,11 +4,19 @@ import { useState, useEffect } from "react";
 import Board, { createEmptyBoard, Cell, findWinningCells } from "../components/Board";
 import { getBestMove } from "../lib/ai";
 import { useGlobalSettings } from "../components/GlobalSettings";
+import { submitScore } from "../lib/leaderboard";
+import { getSavedName } from "../lib/nameStore";
+import { useRef } from "react";
 
 export default function GameScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const isAiPlaying = params.ai === "1";
+  const submittedRef = useRef(false);
+
+  function countFilledCells(b: Cell[][]) {
+    return b.reduce((acc, row) => acc + row.filter(Boolean).length, 0);
+  }
 
   const { colorBlindMode } = useGlobalSettings();
 
@@ -26,11 +34,10 @@ export default function GameScreen() {
 
     playMove(colIndex, currentPlayer);
   };
-
   const playMove = (colIndex: number, player: "red" | "orange") => {
     for (let row = board.length - 1; row >= 0; row--) {
       if (!board[row][colIndex]) {
-        const newBoard = board.map(r => [...r]);
+        const newBoard = board.map((r) => [...r]);
         newBoard[row][colIndex] = player;
 
         const winResult = findWinningCells(newBoard, player);
@@ -38,14 +45,49 @@ export default function GameScreen() {
           setBoard(newBoard);
           setWinner(player);
           setWinningCells(winResult);
+
+          // ↓↓↓ SUBMIT SCORE ONCE
+          (async () => {
+            if (submittedRef.current) return;
+            submittedRef.current = true;
+
+            const name = (await getSavedName()) || "Anonymous";
+            const moves = countFilledCells(newBoard); // example metric
+            const score = Math.max(1, 100 - moves); // simple “higher is better”
+            try {
+              await submitScore(name, score);
+            } catch (e) {
+              console.warn("Failed to submit score:", e);
+            }
+          })();
         } else {
           setBoard(newBoard);
-          setCurrentPlayer(prev => (prev === "red" ? "orange" : "red"));
+          setCurrentPlayer((prev) => (prev === "red" ? "orange" : "red"));
         }
         return;
       }
     }
   };
+
+  // const playMove = (colIndex: number, player: "red" | "orange") => {
+  //   for (let row = board.length - 1; row >= 0; row--) {
+  //     if (!board[row][colIndex]) {
+  //       const newBoard = board.map((r) => [...r]);
+  //       newBoard[row][colIndex] = player;
+
+  //       const winResult = findWinningCells(newBoard, player);
+  //       if (winResult) {
+  //         setBoard(newBoard);
+  //         setWinner(player);
+  //         setWinningCells(winResult);
+  //       } else {
+  //         setBoard(newBoard);
+  //         setCurrentPlayer((prev) => (prev === "red" ? "orange" : "red"));
+  //       }
+  //       return;
+  //     }
+  //   }
+  // };
 
   useEffect(() => {
     if (!isAiPlaying) return;
@@ -60,11 +102,18 @@ export default function GameScreen() {
     }
   }, [currentPlayer, board, winner, isAiPlaying]);
 
+  // const resetGame = () => {
+  //   setBoard(createEmptyBoard());
+  //   setCurrentPlayer(Math.random() < 0.5 ? "red" : "orange");
+  //   setWinner(null);
+  //   setWinningCells(null);
+  // };
   const resetGame = () => {
     setBoard(createEmptyBoard());
     setCurrentPlayer(Math.random() < 0.5 ? "red" : "orange");
     setWinner(null);
     setWinningCells(null);
+    submittedRef.current = false;
   };
 
   const returnToModeScreen = () => {
