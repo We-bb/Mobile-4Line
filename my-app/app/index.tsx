@@ -1,10 +1,11 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { Link } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useThemeColors } from "../components/useThemeColors";
 import { getSavedName, saveName } from "../lib/nameStore";
-
 export default function HomeScreen() {
   const [name, setName] = useState("");
+  const colors = useThemeColors();
 
   useEffect(() => {
     (async () => setName(await getSavedName()))();
@@ -17,15 +18,15 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>4Line Mobile</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}> 
+      <Text style={[styles.title, { color: colors.text }]}>4Line Mobile</Text>
 
       <TextInput
         value={name}
         onChangeText={setName}
         placeholder="Enter your name..."
-        placeholderTextColor="#aaa"
-        style={styles.input}
+        placeholderTextColor={colors.placeholder}
+        style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
         maxLength={20}
       />
 
@@ -44,11 +45,11 @@ export default function HomeScreen() {
 
       <Link href="/settings" asChild>
         <TouchableOpacity>
-          <Text style={styles.settingsIcon}>⚙️</Text>
+          <Text style={[styles.settingsIcon, { color: colors.text }]}>⚙️</Text>
         </TouchableOpacity>
       </Link>
 
-      <Text style={styles.footer}>A strategic puzzle game by Team FYC Dev.</Text>
+      <Text style={[styles.footer, { color: colors.border }]}>A strategic puzzle game by Team FYC Dev.</Text>
     </View>
   );
 }

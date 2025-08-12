@@ -1,18 +1,19 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import { useState, useEffect } from "react";
-import Board, { createEmptyBoard, Cell, findWinningCells } from "../components/Board";
-import { getBestMove } from "../lib/ai";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Board, { Cell, createEmptyBoard, findWinningCells } from "../components/Board";
 import { useGlobalSettings } from "../components/GlobalSettings";
+import { useThemeColors } from "../components/useThemeColors";
+import { getBestMove } from "../lib/ai";
 import { submitScore } from "../lib/leaderboard";
 import { getSavedName } from "../lib/nameStore";
-import { useRef } from "react";
 
 export default function GameScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const isAiPlaying = params.ai === "1";
   const submittedRef = useRef(false);
+  const colors = useThemeColors();
 
   function countFilledCells(b: Cell[][]) {
     return b.reduce((acc, row) => acc + row.filter(Boolean).length, 0);
@@ -69,26 +70,6 @@ export default function GameScreen() {
     }
   };
 
-  // const playMove = (colIndex: number, player: "red" | "orange") => {
-  //   for (let row = board.length - 1; row >= 0; row--) {
-  //     if (!board[row][colIndex]) {
-  //       const newBoard = board.map((r) => [...r]);
-  //       newBoard[row][colIndex] = player;
-
-  //       const winResult = findWinningCells(newBoard, player);
-  //       if (winResult) {
-  //         setBoard(newBoard);
-  //         setWinner(player);
-  //         setWinningCells(winResult);
-  //       } else {
-  //         setBoard(newBoard);
-  //         setCurrentPlayer((prev) => (prev === "red" ? "orange" : "red"));
-  //       }
-  //       return;
-  //     }
-  //   }
-  // };
-
   useEffect(() => {
     if (!isAiPlaying) return;
     if (winner) return;
@@ -102,12 +83,6 @@ export default function GameScreen() {
     }
   }, [currentPlayer, board, winner, isAiPlaying]);
 
-  // const resetGame = () => {
-  //   setBoard(createEmptyBoard());
-  //   setCurrentPlayer(Math.random() < 0.5 ? "red" : "orange");
-  //   setWinner(null);
-  //   setWinningCells(null);
-  // };
   const resetGame = () => {
     setBoard(createEmptyBoard());
     setCurrentPlayer(Math.random() < 0.5 ? "red" : "orange");
@@ -121,12 +96,12 @@ export default function GameScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}> 
       <TouchableOpacity onPress={returnToModeScreen} style={styles.backButton}>
-        <Text style={styles.backButtonText}>←</Text>
+        <Text style={[styles.backButtonText, { color: colors.text }]}>←</Text>
       </TouchableOpacity>
 
-      <Text style={styles.title}>4Line Mobile</Text>
+      <Text style={[styles.title, { color: colors.text }]}>4Line Mobile</Text>
 
       <Board
         board={board}
@@ -136,7 +111,7 @@ export default function GameScreen() {
         colorBlindMode={colorBlindMode}
       />
 
-      <Text style={styles.turnText}>
+      <Text style={[styles.turnText, { color: colors.text }]}> 
         {winner
           ? `Winner: ${winner === "red" ? "Red 🔴" : "Orange 🟠"}`
           : `${currentPlayer === "red" ? "Red 🔴" : "Orange 🟠"}'s Turn`}

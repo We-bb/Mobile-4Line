@@ -1,18 +1,19 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useThemeColors } from "../components/useThemeColors";
 export default function ModeSelect() {
   const router = useRouter();
+  const colors = useThemeColors();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}> 
       {/* Back Button */}
       <TouchableOpacity onPress={() => router.push("/")} style={styles.backButton}>
-        <Text style={styles.backButtonText}>←</Text>
+        <Text style={[styles.backButtonText, { color: colors.text }]}>←</Text>
       </TouchableOpacity>
 
-      <Text style={styles.title}>4Line Mobile</Text>
-      <Text style={styles.subtitle}>Select Game Mode</Text>
+      <Text style={[styles.title, { color: colors.text }]}>4Line Mobile</Text>
+      <Text style={[styles.subtitle, { color: colors.text }]}>Select Game Mode</Text>
 
       <TouchableOpacity
         style={[styles.button, styles.orangeButton]}
