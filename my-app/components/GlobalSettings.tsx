@@ -11,7 +11,7 @@ const GlobalSettingsContext = createContext<GlobalSettings | undefined>(undefine
 
 export const GlobalSettingsProvider = ({ children }: { children: ReactNode }) => {
   const [colorBlindMode, setColorBlindMode] = useState(false);
-  const [themeSetter, setThemeSetter] = useState(false); // false = light, true = dark
+  const [themeSetter, setThemeSetter] = useState(true); // false = light, true = dark
 
   return (
     <GlobalSettingsContext.Provider value={{ colorBlindMode, setColorBlindMode, themeSetter, setThemeSetter }}>
