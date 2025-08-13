@@ -5,7 +5,7 @@ import Constants from "expo-constants";
 
 const extra = Constants.expoConfig?.extra as any;
 
-console.log("🔥 Firebase config loaded:", extra); //test
+// console.log("🔥 Firebase config loaded:", extra); test
 
 const firebaseConfig = {
   apiKey: extra.FIREBASE_API_KEY,

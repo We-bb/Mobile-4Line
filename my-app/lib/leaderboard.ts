@@ -17,5 +17,12 @@ export function watchTopScores(
   topN = 50
 ) {
   const q = query(collection(db, "leaderboard"), orderBy("score", "desc"), orderBy("createdAt", "asc"), limit(topN));
-  return onSnapshot(q, (snap) => onRows(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))));
+
+  return onSnapshot(
+    q,
+    (snap) => onRows(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))),
+    (err) => {
+      console.error("Leaderboard query failed:", err);
+    }
+  );
 }
