@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { GlobalSettingsProvider } from "../components/GlobalSettings"; // adjust path as needed
+import { GlobalSettingsProvider } from "../components/GlobalSettings";
 
 export default function RootLayout() {
   return (

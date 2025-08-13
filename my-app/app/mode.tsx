@@ -1,20 +1,23 @@
 import { useRouter } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useThemeColors } from "../components/useThemeColors";
+
 export default function ModeSelect() {
   const router = useRouter();
-  const colors = useThemeColors();
+  const colors = useThemeColors(); // Theme colors
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}> 
-      {/* Back Button */}
+      {/* Back button */}
       <TouchableOpacity onPress={() => router.push("/")} style={styles.backButton}>
         <Text style={[styles.backButtonText, { color: colors.text }]}>←</Text>
       </TouchableOpacity>
 
+      {/* Screen title */}
       <Text style={[styles.title, { color: colors.text }]}>4Line Mobile</Text>
       <Text style={[styles.subtitle, { color: colors.text }]}>Select Game Mode</Text>
 
+      {/* Pass-and-Play mode */}
       <TouchableOpacity
         style={[styles.button, styles.orangeButton]}
         onPress={() => router.push("/game-screen")}
@@ -22,6 +25,7 @@ export default function ModeSelect() {
         <Text style={styles.buttonText}>🤝 Pass and Play</Text>
       </TouchableOpacity>
 
+      {/* VS AI mode */}
       <TouchableOpacity
         style={[styles.button, styles.redButton]}
         onPress={() => router.push("/game-screen?ai=1")}
@@ -32,10 +36,10 @@ export default function ModeSelect() {
   );
 }
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0b1a2b",
     justifyContent: "center",
     alignItems: "center",
     paddingTop: 60,
@@ -49,18 +53,15 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   backButtonText: {
-    color: "white",
     fontSize: 28,
   },
   title: {
     fontSize: 32,
-    color: "white",
     fontWeight: "bold",
+    marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: "white",
-    marginTop: 4,
     marginBottom: 40,
   },
   button: {

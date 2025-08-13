@@ -2,6 +2,7 @@ import { Cell } from "../components/Board";
 
 type Player = "red" | "orange";
 
+/** Returns the lowest available row in a column, or null if full */
 function getAvailableRow(board: Cell[][], col: number): number | null {
   for (let row = board.length - 1; row >= 0; row--) {
     if (!board[row][col]) return row;
@@ -9,69 +10,46 @@ function getAvailableRow(board: Cell[][], col: number): number | null {
   return null;
 }
 
+/** Checks if a player has 4 in a row anywhere on the board */
 function checkWin(board: Cell[][], player: Player): boolean {
   const height = board.length;
   const width = board[0].length;
 
+  const directions = [
+    [0, 1],   // horizontal
+    [1, 0],   // vertical
+    [1, 1],   // diagonal down-right
+    [-1, 1],  // diagonal up-right
+  ];
+
   for (let r = 0; r < height; r++) {
     for (let c = 0; c < width; c++) {
-      if (
-        c + 3 < width &&
-        board[r][c] === player &&
-        board[r][c + 1] === player &&
-        board[r][c + 2] === player &&
-        board[r][c + 3] === player
-      )
-        return true;
-
-      if (
-        r + 3 < height &&
-        board[r][c] === player &&
-        board[r + 1][c] === player &&
-        board[r + 2][c] === player &&
-        board[r + 3][c] === player
-      )
-        return true;
-
-      if (
-        r + 3 < height &&
-        c + 3 < width &&
-        board[r][c] === player &&
-        board[r + 1][c + 1] === player &&
-        board[r + 2][c + 2] === player &&
-        board[r + 3][c + 3] === player
-      )
-        return true;
-
-      if (
-        r - 3 >= 0 &&
-        c + 3 < width &&
-        board[r][c] === player &&
-        board[r - 1][c + 1] === player &&
-        board[r - 2][c + 2] === player &&
-        board[r - 3][c + 3] === player
-      )
-        return true;
+      for (const [dr, dc] of directions) {
+        let count = 0;
+        for (let i = 0; i < 4; i++) {
+          const nr = r + dr * i;
+          const nc = c + dc * i;
+          if (nr < 0 || nr >= height || nc < 0 || nc >= width) break;
+          if (board[nr][nc] === player) count++;
+        }
+        if (count === 4) return true;
+      }
     }
   }
-
   return false;
 }
 
+/** Heuristic evaluation: scores sequences of 2 or 3 in a row for AI strategy */
 function evaluatePosition(board: Cell[][], player: Player): number {
-  // Heuristic scoring of board for player:
-  // Counts 2-in-a-rows and 3-in-a-rows (not blocked)
-  // +10 for each 2-in-a-row, +50 for each 3-in-a-row
-
   const height = board.length;
   const width = board[0].length;
   let score = 0;
 
   const directions = [
-    [0, 1],  // horizontal
-    [1, 0],  // vertical
-    [1, 1],  // diagonal /
-    [-1, 1], // diagonal \
+    [0, 1],   // horizontal
+    [1, 0],   // vertical
+    [1, 1],   // diagonal down-right
+    [-1, 1],  // diagonal up-right
   ];
 
   for (let r = 0; r < height; r++) {
@@ -85,18 +63,13 @@ function evaluatePosition(board: Cell[][], player: Player): number {
         for (let i = 1; i < 4; i++) {
           const nr = r + dr * i;
           const nc = c + dc * i;
-
           if (nr < 0 || nr >= height || nc < 0 || nc >= width) break;
 
-          if (board[nr][nc] === player) {
-            count++;
-          } else if (board[nr][nc] !== null) {
+          if (board[nr][nc] === player) count++;
+          else if (board[nr][nc] !== null) {
             blocked = true;
             break;
-          } else {
-            // empty cell - potential to extend sequence
-            break;
-          }
+          } else break; // empty space can extend sequence
         }
 
         if (!blocked) {
@@ -110,6 +83,10 @@ function evaluatePosition(board: Cell[][], player: Player): number {
   return score;
 }
 
+/**
+ * Returns the best column index for the AI to play
+ * Uses heuristic evaluation and prevents opponent from winning immediately
+ */
 export function getBestMove(
   board: Cell[][],
   aiPlayer: Player,
@@ -123,22 +100,17 @@ export function getBestMove(
     const row = getAvailableRow(board, col);
     if (row === null) continue;
 
-    // Clone board and simulate AI move
+    // Simulate AI move
     const boardCopy = board.map((r) => [...r]);
     boardCopy[row][col] = aiPlayer;
 
-    // 1) Win immediately?
-    if (checkWin(boardCopy, aiPlayer)) {
-      return col;
-    }
+    // Immediate win?
+    if (checkWin(boardCopy, aiPlayer)) return col;
 
-    // 2) Block opponent win?
-    // We'll check opponent winning moves inside scoring.
-
-    // Evaluate board score for AI after move
+    // Evaluate AI move
     let score = evaluatePosition(boardCopy, aiPlayer);
 
-    // Also evaluate potential opponent score after this move, to avoid helping them
+    // Check potential opponent responses to block threats
     let oppScore = 0;
     for (let oppCol = 0; oppCol < width; oppCol++) {
       const oppRow = getAvailableRow(boardCopy, oppCol);
@@ -146,18 +118,14 @@ export function getBestMove(
       const oppBoardCopy = boardCopy.map((r) => [...r]);
       oppBoardCopy[oppRow][oppCol] = humanPlayer;
       if (checkWin(oppBoardCopy, humanPlayer)) {
-        // Very bad if opponent can win next turn
-        oppScore = 1000;
+        oppScore = 1000; // avoid letting opponent win
         break;
       }
       oppScore = Math.max(oppScore, evaluatePosition(oppBoardCopy, humanPlayer));
     }
 
-    // Penalize moves that enable opponent winning
-    score -= oppScore;
-
-    // Small randomness for imperfection
-    score += Math.random() * 5;
+    score -= oppScore; // penalize moves that allow opponent advantage
+    score += Math.random() * 5; // small randomness for imperfection
 
     if (score > bestScore) {
       bestScore = score;
@@ -167,14 +135,14 @@ export function getBestMove(
     }
   }
 
+  // Fallback if no moves found
   if (bestMoves.length === 0) {
-    // Pick first available as fallback
     for (let col = 0; col < width; col++) {
       if (getAvailableRow(board, col) !== null) return col;
     }
     return 0;
   }
 
-  // Pick random among best moves
+  // Pick randomly among best scoring columns
   return bestMoves[Math.floor(Math.random() * bestMoves.length)];
 }

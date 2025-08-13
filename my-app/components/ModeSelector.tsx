@@ -1,15 +1,19 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
+// Props for ModeSelector
 type ModeSelectorProps = {
-  onSelectMode: (mode: "pass-and-play" | "vs-ai") => void;
+  onSelectMode: (mode: "pass-and-play" | "vs-ai") => void; // callback to handle mode selection
 };
 
+// ModeSelector component: lets the user choose game mode
 export default function ModeSelector({ onSelectMode }: ModeSelectorProps) {
   return (
     <View style={styles.container}>
+      {/* Title */}
       <Text style={styles.title}>Choose Game Mode</Text>
 
+      {/* Pass-and-Play button */}
       <TouchableOpacity
         style={[styles.button, styles.passButton]}
         onPress={() => onSelectMode("pass-and-play")}
@@ -17,6 +21,7 @@ export default function ModeSelector({ onSelectMode }: ModeSelectorProps) {
         <Text style={styles.buttonText}>Pass and Play</Text>
       </TouchableOpacity>
 
+      {/* VS AI button */}
       <TouchableOpacity
         style={[styles.button, styles.aiButton]}
         onPress={() => onSelectMode("vs-ai")}
@@ -27,10 +32,11 @@ export default function ModeSelector({ onSelectMode }: ModeSelectorProps) {
   );
 }
 
+// Styles for ModeSelector
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0b1a2b",
+    backgroundColor: "#0b1a2b", // dark background
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
@@ -49,10 +55,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   passButton: {
-    backgroundColor: "#fca311",
+    backgroundColor: "#fca311", // orange
   },
   aiButton: {
-    backgroundColor: "#d62828",
+    backgroundColor: "#d62828", // red
   },
   buttonText: {
     color: "white",

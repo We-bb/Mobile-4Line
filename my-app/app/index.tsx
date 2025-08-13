@@ -5,23 +5,27 @@ import { useThemeColors } from "../components/useThemeColors";
 import { getSavedName, saveName } from "../lib/nameStore";
 
 export default function HomeScreen() {
-  const [name, setName] = useState("");
+  const [name, setName] = useState(""); // Player name state
   const colors = useThemeColors();
 
+  // Load saved name on mount
   useEffect(() => {
     (async () => setName(await getSavedName()))();
   }, []);
+
+  // Handle Play button press
   const handlePlayPress = async () => {
     const n = name.trim();
     if (!n) return Alert.alert("Enter a name first");
-    await saveName(n);
-    // Link below will navigate; saving here ensures it's persisted
+    await saveName(n); // Save name before navigating
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Game title */}
       <Text style={[styles.title, { color: colors.text }]}>4Line Mobile</Text>
 
+      {/* Name input */}
       <TextInput
         value={name}
         onChangeText={setName}
@@ -31,41 +35,45 @@ export default function HomeScreen() {
         maxLength={20}
       />
 
-      {/* 👇 UPDATED LINK to go to mode select screen */}
+      {/* Play button → navigates to mode select */}
       <Link href="/mode" asChild>
         <TouchableOpacity style={styles.playButton} onPress={handlePlayPress}>
           <Text style={styles.playText}>▶ Play</Text>
         </TouchableOpacity>
       </Link>
 
+      {/* Leaderboard button */}
       <Link href="/leaderboard" asChild>
         <TouchableOpacity style={styles.leaderboardButton}>
           <Text style={styles.leaderboardText}>🏆 Leaderboards</Text>
         </TouchableOpacity>
       </Link>
 
+      {/* Settings button */}
       <Link href="/settings" asChild>
         <TouchableOpacity>
           <Text style={[styles.settingsIcon, { color: colors.text }]}>⚙️</Text>
         </TouchableOpacity>
       </Link>
 
-      <Text style={[styles.footer, { color: colors.border }]}>A strategic puzzle game by Team FYC Dev.</Text>
+      {/* Footer */}
+      <Text style={[styles.footer, { color: colors.border }]}>
+        A strategic puzzle game by Team FYC Dev.
+      </Text>
     </View>
   );
 }
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0b1a2b",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 20,
   },
   title: {
     fontSize: 32,
-    color: "white",
     fontWeight: "bold",
     marginBottom: 40,
   },
@@ -73,7 +81,6 @@ const styles = StyleSheet.create({
     width: "80%",
     height: 40,
     borderRadius: 20,
-    backgroundColor: "white",
     paddingHorizontal: 15,
     marginBottom: 20,
   },
@@ -104,10 +111,8 @@ const styles = StyleSheet.create({
   settingsIcon: {
     fontSize: 30,
     marginBottom: 40,
-    color: "white",
   },
   footer: {
-    color: "#ccc",
     position: "absolute",
     bottom: 20,
     fontSize: 12,

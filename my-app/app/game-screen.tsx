@@ -6,27 +6,23 @@ import { useGlobalSettings } from "../components/GlobalSettings";
 import { useThemeColors } from "../components/useThemeColors";
 import { getBestMove } from "../lib/ai";
 import { submitScore } from "../lib/leaderboard";
-import { getSavedName } from "../lib/nameStore";
-import { getSavedName2, saveName, saveName2 } from "../lib/nameStore";
+import { getSavedName, getSavedName2, saveName, saveName2 } from "../lib/nameStore";
 
 export default function GameScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const isAiPlaying = params.ai === "1";
-  const submittedRef = useRef(false);
+  const submittedRef = useRef(false); // To prevent double score submission
   const colors = useThemeColors();
 
-  // State for player names
+  // Player name state
   const [redName, setRedName] = useState("");
   const [orangeName, setOrangeName] = useState("");
   const [showNamesModal, setShowNamesModal] = useState(false);
 
-  function countFilledCells(b: Cell[][]) {
-    return b.reduce((acc, row) => acc + row.filter(Boolean).length, 0);
-  }
-
   const { colorBlindMode } = useGlobalSettings();
 
+  // Game state
   const [board, setBoard] = useState<Cell[][]>(createEmptyBoard());
   const [currentPlayer, setCurrentPlayer] = useState<"red" | "orange">(Math.random() < 0.5 ? "red" : "orange");
   const [winner, setWinner] = useState<"red" | "orange" | null>(null);
@@ -35,23 +31,30 @@ export default function GameScreen() {
   const humanPlayer = "red";
   const aiPlayer = "orange";
 
-  // Load saved names; ALWAYS ask in pass-and-play (prefilled with saved)
+  // Count filled cells for scoring
+  function countFilledCells(b: Cell[][]) {
+    return b.reduce((acc, row) => acc + row.filter(Boolean).length, 0);
+  }
+
+  // Load saved player names
   useEffect(() => {
     (async () => {
       const n1 = (await getSavedName()) || "";
       const n2 = (await getSavedName2()) || "";
       setRedName(n1);
       setOrangeName(isAiPlaying ? "AI" : n2);
-      if (!isAiPlaying) setShowNamesModal(true); // ← always prompt in pass-and-play
+      if (!isAiPlaying) setShowNamesModal(true); // Always prompt in pass-and-play
     })();
   }, [isAiPlaying]);
 
+  // Handle player tapping a column
   const handleColumnPress = (colIndex: number) => {
     if (winner) return;
     if (isAiPlaying && currentPlayer !== humanPlayer) return;
     playMove(colIndex, currentPlayer);
   };
 
+  // Play a move for a player
   const playMove = (colIndex: number, player: "red" | "orange") => {
     for (let row = board.length - 1; row >= 0; row--) {
       if (!board[row][colIndex]) {
@@ -64,14 +67,13 @@ export default function GameScreen() {
           setWinner(player);
           setWinningCells(winResult);
 
-          // SUBMIT WINNER'S SCORE ONCE
+          // Submit score once
           (async () => {
             if (submittedRef.current) return;
             submittedRef.current = true;
 
             const moves = countFilledCells(newBoard);
             const score = Math.max(1, 100 - moves);
-
             const winnerName = player === "red" ? redName || "Red" : orangeName || (isAiPlaying ? "AI" : "Orange");
 
             try {
@@ -89,9 +91,9 @@ export default function GameScreen() {
     }
   };
 
+  // AI move effect
   useEffect(() => {
-    if (!isAiPlaying) return;
-    if (winner) return;
+    if (!isAiPlaying || winner) return;
 
     if (currentPlayer === aiPlayer) {
       const timeout = setTimeout(() => {
@@ -102,6 +104,7 @@ export default function GameScreen() {
     }
   }, [currentPlayer, board, winner, isAiPlaying]);
 
+  // Reset the game
   const resetGame = () => {
     setBoard(createEmptyBoard());
     setCurrentPlayer(Math.random() < 0.5 ? "red" : "orange");
@@ -110,13 +113,11 @@ export default function GameScreen() {
     submittedRef.current = false;
   };
 
-  const returnToModeScreen = () => {
-    router.push("/mode");
-  };
+  const returnToModeScreen = () => router.push("/mode");
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Pass-and-play names modal (always shows on enter; prefilled with saved names) */}
+      {/* Pass-and-play names modal */}
       {!isAiPlaying && (
         <Modal visible={showNamesModal} transparent animationType="fade">
           <View style={styles.modalBackdrop}>
@@ -135,7 +136,7 @@ export default function GameScreen() {
               <TextInput
                 value={orangeName}
                 onChangeText={setOrangeName}
-                placeholder="Player 2  name"
+                placeholder="Player 2 name"
                 placeholderTextColor={colors.placeholder}
                 style={[styles.modalInput, { color: colors.text, backgroundColor: colors.background }]}
                 maxLength={20}
@@ -159,12 +160,14 @@ export default function GameScreen() {
         </Modal>
       )}
 
+      {/* Back button */}
       <TouchableOpacity onPress={returnToModeScreen} style={styles.backButton}>
         <Text style={[styles.backButtonText, { color: colors.text }]}>←</Text>
       </TouchableOpacity>
 
       <Text style={[styles.title, { color: colors.text }]}>4Line Mobile</Text>
 
+      {/* Game board */}
       <Board
         board={board}
         onColumnPress={handleColumnPress}
@@ -173,16 +176,16 @@ export default function GameScreen() {
         colorBlindMode={colorBlindMode}
       />
 
+      {/* Display turn or winner */}
       <Text style={[styles.turnText, { color: colors.text }]}>
         {winner
           ? `Winner: ${
               winner === "red" ? `${redName || "Red"} 🔴` : `${orangeName || (isAiPlaying ? "AI" : "Orange")} 🟠`
             }`
-          : `${
-              currentPlayer === "red" ? `${redName || "Red"} 🔴` : `${orangeName || (isAiPlaying ? "AI" : "Orange")} 🟠`
-            }'s Turn`}
+          : `${currentPlayer === "red" ? `${redName || "Red"} 🔴` : `${orangeName || (isAiPlaying ? "AI" : "Orange")} 🟠`}'s Turn`}
       </Text>
 
+      {/* Winner buttons */}
       {winner && (
         <View style={styles.winnerButtons}>
           <TouchableOpacity onPress={resetGame} style={[styles.resetButton, styles.orangeButton]}>
@@ -201,10 +204,10 @@ export default function GameScreen() {
   );
 }
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0b1a2b",
     alignItems: "center",
     justifyContent: "center",
     paddingTop: 60,
@@ -218,19 +221,16 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   backButtonText: {
-    color: "white",
     fontSize: 28,
   },
   title: {
     fontSize: 32,
-    color: "white",
     fontWeight: "bold",
     marginBottom: 20,
   },
   turnText: {
     marginTop: 20,
     fontSize: 18,
-    color: "white",
   },
   resetButton: {
     paddingVertical: 12,
@@ -255,8 +255,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     alignItems: "center",
   },
-
-  // Modal styles (added)
   modalBackdrop: {
     flex: 1,
     alignItems: "center",
