@@ -1,20 +1,39 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { Link } from "expo-router";
+import { useEffect, useState } from "react";
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useThemeColors } from "../components/useThemeColors";
+import { getSavedName, saveName } from "../lib/nameStore";
 
 export default function HomeScreen() {
+  const [name, setName] = useState("");
+  const colors = useThemeColors();
+
+  useEffect(() => {
+    (async () => setName(await getSavedName()))();
+  }, []);
+  const handlePlayPress = async () => {
+    const n = name.trim();
+    if (!n) return Alert.alert("Enter a name first");
+    await saveName(n);
+    // Link below will navigate; saving here ensures it's persisted
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>4Line Mobile</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>4Line Mobile</Text>
 
       <TextInput
+        value={name}
+        onChangeText={setName}
         placeholder="Enter your name..."
-        placeholderTextColor="#aaa"
-        style={styles.input}
+        placeholderTextColor={colors.placeholder}
+        style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
+        maxLength={20}
       />
 
       {/* 👇 UPDATED LINK to go to mode select screen */}
       <Link href="/mode" asChild>
-        <TouchableOpacity style={styles.playButton}>
+        <TouchableOpacity style={styles.playButton} onPress={handlePlayPress}>
           <Text style={styles.playText}>▶ Play</Text>
         </TouchableOpacity>
       </Link>
@@ -27,11 +46,11 @@ export default function HomeScreen() {
 
       <Link href="/settings" asChild>
         <TouchableOpacity>
-          <Text style={styles.settingsIcon}>⚙️</Text>
+          <Text style={[styles.settingsIcon, { color: colors.text }]}>⚙️</Text>
         </TouchableOpacity>
       </Link>
 
-      <Text style={styles.footer}>A strategic puzzle game by Team FYC Dev.</Text>
+      <Text style={[styles.footer, { color: colors.border }]}>A strategic puzzle game by Team FYC Dev.</Text>
     </View>
   );
 }

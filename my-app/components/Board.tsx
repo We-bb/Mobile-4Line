@@ -1,8 +1,46 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
 import Piece from "./Piece";
+import { useGlobalSettings } from "./GlobalSettings";
 
 export type Cell = "red" | "orange" | null;
+
+const SAFE_BLUE = "#0072B2";
+const SAFE_ORANGE = "#E69F00";
+
+function Token({ owner }: { owner: "red" | "orange" }) {
+  const { colorBlindMode } = useGlobalSettings();
+
+  const color = colorBlindMode
+    ? owner === "red"
+      ? SAFE_BLUE
+      : SAFE_ORANGE
+    : owner === "red"
+    ? "#dc2f02"
+    : "#fca311";
+
+  // Optional: symbol overlay to differentiate
+  const symbol = colorBlindMode ? (owner === "red" ? "▲" : "●") : "";
+
+  return (
+    <View
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: color,
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: colorBlindMode ? 2 : 0,
+        borderColor: "#00000055",
+      }}
+    >
+      {colorBlindMode ? (
+        <Text style={{ color: "white", fontWeight: "900" }}>{symbol}</Text>
+      ) : null}
+    </View>
+  );
+}
 
 interface BoardProps {
   board: Cell[][];
@@ -24,10 +62,10 @@ export function findWinningCells(
   const width = board[0].length;
 
   const directions = [
-    [0, 1],   // horizontal right
-    [1, 0],   // vertical down
-    [1, 1],   // diagonal down-right
-    [-1, 1],  // diagonal up-right
+    [0, 1], // horizontal right
+    [1, 0], // vertical down
+    [1, 1], // diagonal down-right
+    [-1, 1], // diagonal up-right
   ];
 
   for (let r = 0; r < height; r++) {
@@ -41,8 +79,10 @@ export function findWinningCells(
           const nc = c + dc * i;
 
           if (
-            nr < 0 || nr >= height ||
-            nc < 0 || nc >= width ||
+            nr < 0 ||
+            nr >= height ||
+            nc < 0 ||
+            nc >= width ||
             board[nr][nc] !== player
           ) {
             break;
@@ -72,7 +112,9 @@ export default function Board({
       <View style={styles.selectorRow}>
         {board[0].map((_, colIndex) => (
           <TouchableOpacity key={colIndex} onPress={() => onColumnPress(colIndex)}>
-            <View style={[styles.selectorCircle, { backgroundColor: currentPlayer }]} />
+            <View
+              style={[styles.selectorCircle, { backgroundColor: currentPlayer }]}
+            />
           </TouchableOpacity>
         ))}
       </View>
@@ -83,17 +125,15 @@ export default function Board({
           <View key={rowIdx} style={styles.boardRow}>
             {row.map((cell, colIdx) => {
               const isWinning =
-                winningCells?.some(([r, c]) => r === rowIdx && c === colIdx) ?? false;
+                winningCells?.some(([r, c]) => r === rowIdx && c === colIdx) ??
+                false;
 
               return (
                 <View
                   key={colIdx}
                   style={[
                     styles.cell,
-                    {
-                      borderColor: isWinning ? "#ffd700" : "#2c2f45",
-                      borderWidth: isWinning ? 2 : 1,
-                    },
+                    isWinning && styles.winningCell, // apply prominent style if winning
                   ]}
                 >
                   <Piece color={cell} colorBlindMode={colorBlindMode} />
@@ -139,5 +179,15 @@ const styles = StyleSheet.create({
     margin: 5,
     justifyContent: "center",
     alignItems: "center",
+    overflow: "visible", // allow glow
+  },
+  winningCell: {
+    borderColor: "#FFD700", // bright gold
+    borderWidth: 4, // thicker border
+    shadowColor: "#FFD700",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 6,
+    elevation: 8, // Android shadow
   },
 });
