@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useThemeColors } from "../components/useThemeColors";
 import { getSavedName, saveName } from "../lib/nameStore";
+
 export default function HomeScreen() {
   const [name, setName] = useState("");
   const colors = useThemeColors();
@@ -18,7 +19,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}> 
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Text style={[styles.title, { color: colors.text }]}>4Line Mobile</Text>
 
       <TextInput

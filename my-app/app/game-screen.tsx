@@ -1,12 +1,13 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View, Modal, TextInput } from "react-native";
 import Board, { Cell, createEmptyBoard, findWinningCells } from "../components/Board";
 import { useGlobalSettings } from "../components/GlobalSettings";
 import { useThemeColors } from "../components/useThemeColors";
 import { getBestMove } from "../lib/ai";
 import { submitScore } from "../lib/leaderboard";
 import { getSavedName } from "../lib/nameStore";
+import { getSavedName2, saveName, saveName2 } from "../lib/nameStore";
 
 export default function GameScreen() {
   const router = useRouter();
@@ -14,6 +15,11 @@ export default function GameScreen() {
   const isAiPlaying = params.ai === "1";
   const submittedRef = useRef(false);
   const colors = useThemeColors();
+
+  // State for player names
+  const [redName, setRedName] = useState("");
+  const [orangeName, setOrangeName] = useState("");
+  const [showNamesModal, setShowNamesModal] = useState(false);
 
   function countFilledCells(b: Cell[][]) {
     return b.reduce((acc, row) => acc + row.filter(Boolean).length, 0);
@@ -29,12 +35,23 @@ export default function GameScreen() {
   const humanPlayer = "red";
   const aiPlayer = "orange";
 
+  // Load saved names; ALWAYS ask in pass-and-play (prefilled with saved)
+  useEffect(() => {
+    (async () => {
+      const n1 = (await getSavedName()) || "";
+      const n2 = (await getSavedName2()) || "";
+      setRedName(n1);
+      setOrangeName(isAiPlaying ? "AI" : n2);
+      if (!isAiPlaying) setShowNamesModal(true); // ← always prompt in pass-and-play
+    })();
+  }, [isAiPlaying]);
+
   const handleColumnPress = (colIndex: number) => {
     if (winner) return;
     if (isAiPlaying && currentPlayer !== humanPlayer) return;
-
     playMove(colIndex, currentPlayer);
   };
+
   const playMove = (colIndex: number, player: "red" | "orange") => {
     for (let row = board.length - 1; row >= 0; row--) {
       if (!board[row][colIndex]) {
@@ -47,16 +64,18 @@ export default function GameScreen() {
           setWinner(player);
           setWinningCells(winResult);
 
-          // ↓↓↓ SUBMIT SCORE ONCE
+          // SUBMIT WINNER'S SCORE ONCE
           (async () => {
             if (submittedRef.current) return;
             submittedRef.current = true;
 
-            const name = (await getSavedName()) || "Anonymous";
-            const moves = countFilledCells(newBoard); // example metric
-            const score = Math.max(1, 100 - moves); // simple “higher is better”
+            const moves = countFilledCells(newBoard);
+            const score = Math.max(1, 100 - moves);
+
+            const winnerName = player === "red" ? redName || "Red" : orangeName || (isAiPlaying ? "AI" : "Orange");
+
             try {
-              await submitScore(name, score);
+              await submitScore(winnerName, score);
             } catch (e) {
               console.warn("Failed to submit score:", e);
             }
@@ -96,7 +115,50 @@ export default function GameScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}> 
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Pass-and-play names modal (always shows on enter; prefilled with saved names) */}
+      {!isAiPlaying && (
+        <Modal visible={showNamesModal} transparent animationType="fade">
+          <View style={styles.modalBackdrop}>
+            <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Players</Text>
+
+              <TextInput
+                value={redName}
+                onChangeText={setRedName}
+                placeholder="Player 1 name"
+                placeholderTextColor={colors.placeholder}
+                style={[styles.modalInput, { color: colors.text, backgroundColor: colors.background }]}
+                maxLength={20}
+              />
+
+              <TextInput
+                value={orangeName}
+                onChangeText={setOrangeName}
+                placeholder="Player 2  name"
+                placeholderTextColor={colors.placeholder}
+                style={[styles.modalInput, { color: colors.text, backgroundColor: colors.background }]}
+                maxLength={20}
+              />
+
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={async () => {
+                  const n1 = redName.trim();
+                  const n2 = orangeName.trim();
+                  if (!n1 || !n2) return;
+                  await saveName(n1);
+                  await saveName2(n2);
+                  setShowNamesModal(false);
+                }}
+              >
+                <Text style={styles.modalButtonText}>Start</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
+
       <TouchableOpacity onPress={returnToModeScreen} style={styles.backButton}>
         <Text style={[styles.backButtonText, { color: colors.text }]}>←</Text>
       </TouchableOpacity>
@@ -111,10 +173,14 @@ export default function GameScreen() {
         colorBlindMode={colorBlindMode}
       />
 
-      <Text style={[styles.turnText, { color: colors.text }]}> 
+      <Text style={[styles.turnText, { color: colors.text }]}>
         {winner
-          ? `Winner: ${winner === "red" ? "Red 🔴" : "Orange 🟠"}`
-          : `${currentPlayer === "red" ? "Red 🔴" : "Orange 🟠"}'s Turn`}
+          ? `Winner: ${
+              winner === "red" ? `${redName || "Red"} 🔴` : `${orangeName || (isAiPlaying ? "AI" : "Orange")} 🟠`
+            }`
+          : `${
+              currentPlayer === "red" ? `${redName || "Red"} 🔴` : `${orangeName || (isAiPlaying ? "AI" : "Orange")} 🟠`
+            }'s Turn`}
       </Text>
 
       {winner && (
@@ -188,5 +254,40 @@ const styles = StyleSheet.create({
   winnerButtons: {
     marginTop: 20,
     alignItems: "center",
+  },
+
+  // Modal styles (added)
+  modalBackdrop: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalCard: {
+    width: "85%",
+    borderRadius: 16,
+    padding: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  modalInput: {
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 10,
+  },
+  modalButton: {
+    backgroundColor: "#fca311",
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  modalButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });
