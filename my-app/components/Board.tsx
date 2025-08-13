@@ -11,7 +11,13 @@ const SAFE_ORANGE = "#E69F00";
 function Token({ owner }: { owner: "red" | "orange" }) {
   const { colorBlindMode } = useGlobalSettings();
 
-  const color = colorBlindMode ? (owner === "red" ? SAFE_BLUE : SAFE_ORANGE) : owner === "red" ? "#dc2f02" : "#fca311";
+  const color = colorBlindMode
+    ? owner === "red"
+      ? SAFE_BLUE
+      : SAFE_ORANGE
+    : owner === "red"
+    ? "#dc2f02"
+    : "#fca311";
 
   // Optional: symbol overlay to differentiate
   const symbol = colorBlindMode ? (owner === "red" ? "▲" : "●") : "";
@@ -29,7 +35,9 @@ function Token({ owner }: { owner: "red" | "orange" }) {
         borderColor: "#00000055",
       }}
     >
-      {colorBlindMode ? <Text style={{ color: "white", fontWeight: "900" }}>{symbol}</Text> : null}
+      {colorBlindMode ? (
+        <Text style={{ color: "white", fontWeight: "900" }}>{symbol}</Text>
+      ) : null}
     </View>
   );
 }
@@ -46,7 +54,10 @@ export function createEmptyBoard(): Cell[][] {
   return Array.from({ length: 6 }, () => Array(7).fill(null));
 }
 
-export function findWinningCells(board: Cell[][], player: "red" | "orange"): [number, number][] | null {
+export function findWinningCells(
+  board: Cell[][],
+  player: "red" | "orange"
+): [number, number][] | null {
   const height = board.length;
   const width = board[0].length;
 
@@ -67,7 +78,13 @@ export function findWinningCells(board: Cell[][], player: "red" | "orange"): [nu
           const nr = r + dr * i;
           const nc = c + dc * i;
 
-          if (nr < 0 || nr >= height || nc < 0 || nc >= width || board[nr][nc] !== player) {
+          if (
+            nr < 0 ||
+            nr >= height ||
+            nc < 0 ||
+            nc >= width ||
+            board[nr][nc] !== player
+          ) {
             break;
           }
           cells.push([nr, nc]);
@@ -82,14 +99,22 @@ export function findWinningCells(board: Cell[][], player: "red" | "orange"): [nu
   return null;
 }
 
-export default function Board({ board, onColumnPress, currentPlayer, winningCells, colorBlindMode }: BoardProps) {
+export default function Board({
+  board,
+  onColumnPress,
+  currentPlayer,
+  winningCells,
+  colorBlindMode,
+}: BoardProps) {
   return (
     <View style={styles.wrapper}>
       {/* Selector Row */}
       <View style={styles.selectorRow}>
         {board[0].map((_, colIndex) => (
           <TouchableOpacity key={colIndex} onPress={() => onColumnPress(colIndex)}>
-            <View style={[styles.selectorCircle, { backgroundColor: currentPlayer }]} />
+            <View
+              style={[styles.selectorCircle, { backgroundColor: currentPlayer }]}
+            />
           </TouchableOpacity>
         ))}
       </View>
@@ -99,17 +124,16 @@ export default function Board({ board, onColumnPress, currentPlayer, winningCell
         {board.map((row, rowIdx) => (
           <View key={rowIdx} style={styles.boardRow}>
             {row.map((cell, colIdx) => {
-              const isWinning = winningCells?.some(([r, c]) => r === rowIdx && c === colIdx) ?? false;
+              const isWinning =
+                winningCells?.some(([r, c]) => r === rowIdx && c === colIdx) ??
+                false;
 
               return (
                 <View
                   key={colIdx}
                   style={[
                     styles.cell,
-                    {
-                      borderColor: isWinning ? "#ffd700" : "#2c2f45",
-                      borderWidth: isWinning ? 2 : 1,
-                    },
+                    isWinning && styles.winningCell, // apply prominent style if winning
                   ]}
                 >
                   <Piece color={cell} colorBlindMode={colorBlindMode} />
@@ -155,5 +179,15 @@ const styles = StyleSheet.create({
     margin: 5,
     justifyContent: "center",
     alignItems: "center",
+    overflow: "visible", // allow glow
+  },
+  winningCell: {
+    borderColor: "#FFD700", // bright gold
+    borderWidth: 4, // thicker border
+    shadowColor: "#FFD700",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 6,
+    elevation: 8, // Android shadow
   },
 });

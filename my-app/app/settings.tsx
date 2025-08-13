@@ -10,8 +10,6 @@ import {
 import { useGlobalSettings } from "../components/GlobalSettings";
 import { useThemeColors } from "../components/useThemeColors";
 
-
-
 export default function SettingsScreen() {
   const router = useRouter();
   const { colorBlindMode, setColorBlindMode } = useGlobalSettings();
@@ -19,7 +17,7 @@ export default function SettingsScreen() {
   const colors = useThemeColors();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}> 
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.titleRow}>
         <TouchableOpacity
           onPress={() => router.push("/")}
@@ -30,14 +28,36 @@ export default function SettingsScreen() {
         <Text style={[styles.title, { color: colors.text }]}>Settings</Text>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 40 }}>
-        <View style={[styles.settingRow, { backgroundColor: colors.card, borderBottomColor: colors.border }]}> 
-          <Text style={[styles.label, { color: colors.text }]}>Color Blind Mode</Text>
-          <Switch value={colorBlindMode} onValueChange={setColorBlindMode}  />
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={{ paddingBottom: 40 }}
+      >
+        {/* Color Blind Mode */}
+        <View
+          style={[
+            styles.settingRow,
+            { backgroundColor: colors.card, borderBottomColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.label, { color: colors.text }]}>
+            Color Blind Mode
+          </Text>
+          <Switch
+            value={colorBlindMode}
+            onValueChange={setColorBlindMode}
+            thumbColor={colorBlindMode ? "#fff" : "#222"}
+            trackColor={{ false: colors.border, true: colors.accent }}
+          />
         </View>
 
-        <View style={[styles.settingRow, { backgroundColor: colors.card, borderBottomColor: colors.border }]}> 
-          <Text style={[styles.label, { color: colors.text }]}>Theme</Text>
+        {/* Theme */}
+        <View
+          style={[
+            styles.settingRow,
+            { backgroundColor: colors.card, borderBottomColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.label, { color: colors.text }]}>Dark Mode</Text>
           <Switch
             value={themeSetter}
             onValueChange={setThemeSetter}
@@ -46,11 +66,15 @@ export default function SettingsScreen() {
           />
         </View>
 
-        <View style={[styles.rulesBox, { backgroundColor: colors.card }]}> 
-          <Text style={[styles.rulesTitle, { color: colors.accent }]}>📜 Game Rules</Text>
-          <Text style={[styles.rulesText, { color: colors.text }]}> 
+        {/* Rules Box */}
+        <View style={[styles.rulesBox, { backgroundColor: colors.card }]}>
+          <Text style={[styles.rulesTitle, { color: colors.accent }]}>
+            📜 Game Rules
+          </Text>
+          <Text style={[styles.rulesText, { color: colors.text }]}>
             • Take turns dropping a token into one of 7 columns.{"\n"}
-            • First to connect 4 tokens in a row (vertically, horizontally, or diagonally) wins.
+            • First to connect 4 tokens in a row (vertically, horizontally, or
+            diagonally) wins.
           </Text>
         </View>
       </ScrollView>
